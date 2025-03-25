@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI护肤品搭配顾问 - 页面预览</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        .device-container {
+            width: 430px;
+            height: 932px;
+            margin: 20px;
+            display: inline-block;
+            vertical-align: top;
+            position: relative;
+        }
+        .device-frame {
+            border-radius: 50px;
+            overflow: hidden;
+            box-shadow: 0 0 0 10px #f3f4f6, 0 10px 30px rgba(0, 0, 0, 0.1);
+            height: 100%;
+            background: white;
+            position: relative;
+        }
+        .preview-scroll {
+            overflow-x: auto;
+            white-space: nowrap;
+            padding: 20px;
+            background: #1a1a1a;
+            min-height: 100vh;
+        }
+        .page-title {
+            text-align: center;
+            color: white;
+            margin-bottom: 10px;
+            font-size: 14px;
+        }
+        .status-bar {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 44px;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 20px;
+            font-size: 12px;
+        }
+        iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+    </style>
+</head>
+<body class="bg-gray-900">
+    <header class="bg-gray-800 text-white p-6 shadow-lg">
+        <h1 class="text-2xl font-bold">AI护肤品搭配顾问 - 页面预览</h1>
+        <p class="text-gray-400 mt-2">所有页面并排展示，方便比较和预览</p>
+    </header>
+
+    <div class="preview-scroll">
+        <!-- Home Page -->
+        <div class="device-container">
+            <div class="page-title">首页 (home.html)</div>
+            <div class="device-frame">
+                <div class="status-bar">
+                    <div class="flex items-center">
+                        <span class="font-medium">02:40</span>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <i class="fas fa-signal"></i>
+                        <i class="fas fa-wifi"></i>
+                        <div class="flex items-center">
+                            <i class="fas fa-battery-full ml-1"></i>
+                            <span class="ml-1">100%</span>
+                        </div>
+                    </div>
+                </div>
+                <iframe src="pages/home.html"></iframe>
+            </div>
+        </div>
+
+        <!-- Upload Page -->
+        <div class="device-container">
+            <div class="page-title">产品分析 (upload.html)</div>
+            <div class="device-frame">
+                <div class="status-bar">
+                    <div class="flex items-center">
+                        <span class="font-medium">02:40</span>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <i class="fas fa-signal"></i>
+                        <i class="fas fa-wifi"></i>
+                        <div class="flex items-center">
+                            <i class="fas fa-battery-full ml-1"></i>
+                            <span class="ml-1">100%</span>
+                        </div>
+                    </div>
+                </div>
+                <iframe src="pages/upload.html"></iframe>
+            </div>
+        </div>
+
+        <!-- Skin Status Page -->
+        <div class="device-container">
+            <div class="page-title">肌肤检测 (skinstatus.html)</div>
+            <div class="device-frame">
+                <div class="status-bar">
+                    <div class="flex items-center">
+                        <span class="font-medium">02:40</span>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <i class="fas fa-signal"></i>
+                        <i class="fas fa-wifi"></i>
+                        <div class="flex items-center">
+                            <i class="fas fa-battery-full ml-1"></i>
+                            <span class="ml-1">100%</span>
+                        </div>
+                    </div>
+                </div>
+                <iframe src="pages/skinstatus.html"></iframe>
+            </div>
+        </div>
+
+        <!-- Profile Page -->
+        <div class="device-container">
+            <div class="page-title">个人中心 (profile.html)</div>
+            <div class="device-frame">
+                <div class="status-bar">
+                    <div class="flex items-center">
+                        <span class="font-medium">02:40</span>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <i class="fas fa-signal"></i>
+                        <i class="fas fa-wifi"></i>
+                        <div class="flex items-center">
+                            <i class="fas fa-battery-full ml-1"></i>
+                            <span class="ml-1">100%</span>
+                        </div>
+                    </div>
+                </div>
+                <iframe src="pages/profile.html"></iframe>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Add horizontal scroll with mouse wheel
+        document.querySelector('.preview-scroll').addEventListener('wheel', function(e) {
+            if (e.deltaY !== 0) {
+                e.preventDefault();
+                this.scrollLeft += e.deltaY;
+            }
+        });
+
+        // Handle page navigation
+        function handleNavigation(event, iframe) {
+            // Prevent the default behavior
+            event.preventDefault();
+            
+            // Get all links within the iframe
+            const links = iframe.contentDocument.querySelectorAll('a[href]');
+            
+            // Add click event listeners to all links
+            links.forEach(link => {
+                link.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    const href = link.getAttribute('href');
+                    if (href) {
+                        // Update all iframes that should show this page
+                        document.querySelectorAll('iframe').forEach(frame => {
+                            if (frame.src.includes(href)) {
+                                frame.src = `pages/${href}`;
+                            }
+                        });
+                    }
+                });
+            });
+        }
+
+        // Add load event listeners to all iframes
+        document.querySelectorAll('iframe').forEach(iframe => {
+            iframe.addEventListener('load', (e) => handleNavigation(e, iframe));
+        });
+    </script>
+</body>
+</html> 
