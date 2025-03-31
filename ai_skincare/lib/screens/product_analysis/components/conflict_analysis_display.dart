@@ -20,7 +20,6 @@ class _ConflictAnalysisDisplayState extends State<ConflictAnalysisDisplay>
     with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _fadeInAnimation;
-  int _currentTab = 0;
 
   @override
   void initState() {
@@ -69,7 +68,7 @@ class _ConflictAnalysisDisplayState extends State<ConflictAnalysisDisplay>
             children: [
               _buildProductsBar(),
               Expanded(
-                child: _buildTabContent(),
+                child: _buildAnalysisContent(),
               ),
             ],
           ),
@@ -82,197 +81,256 @@ class _ConflictAnalysisDisplayState extends State<ConflictAnalysisDisplay>
     return Container(
       height: 60,
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.7),
+        color: Colors.white.withOpacity(0.8),
+        borderRadius: const BorderRadius.only(
+          bottomLeft: Radius.circular(16),
+          bottomRight: Radius.circular(16),
+        ),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.05),
-            blurRadius: 5,
-            offset: const Offset(0, 2),
+            blurRadius: 8,
+            offset: const Offset(0, 3),
           ),
         ],
       ),
-      child: ListView(
-        scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        children: [
-          _buildTabButton('✨ 萌喵总结', 0),
-          _buildTabButton('🧪 成分分析', 1),
-          _buildTabButton('⚠️ 风险提示', 2),
-          _buildTabButton('💡 使用建议', 3),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildTabButton(String title, int index) {
-    final isSelected = _currentTab == index;
-    return GestureDetector(
-      onTap: () {
-        setState(() {
-          _currentTab = index;
-        });
-      },
-      child: Container(
-        margin: const EdgeInsets.only(right: 8),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        decoration: BoxDecoration(
-          color: isSelected ? const Color(0xFFFFB7C5) : Colors.white,
-          borderRadius: BorderRadius.circular(20),
-          boxShadow: [
-            if (isSelected)
+      child: Center(
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+          decoration: BoxDecoration(
+            color: const Color(0xFFFFB7C5),
+            borderRadius: BorderRadius.circular(20),
+            boxShadow: [
               BoxShadow(
                 color: const Color(0xFFFFB7C5).withOpacity(0.5),
-                blurRadius: 4,
+                blurRadius: 6,
                 offset: const Offset(0, 2),
               ),
-          ],
-        ),
-        child: Text(
-          title,
-          style: TextStyle(
-            color: isSelected ? Colors.white : const Color(0xFF666666),
-            fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+            ],
+          ),
+          child: const Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                '📊 ',
+                style: TextStyle(fontSize: 18),
+              ),
+              Text(
+                '分析报告',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16,
+                ),
+              ),
+            ],
           ),
         ),
       ),
     );
   }
 
-  Widget _buildTabContent() {
-    switch (_currentTab) {
-      case 0:
-        return _buildSummaryView();
-      case 1:
-        return _buildIngredientsView();
-      case 2:
-        return _buildRisksView();
-      case 3:
-        return _buildSuggestionsView();
-      default:
-        return _buildSummaryView();
-    }
-  }
+  Widget _buildAnalysisContent() {
+    // 解析分析结果
+    final parsedSections = _parseAnalysisResult(widget.analysisResult);
 
-  Widget _buildSummaryView() {
+    // 调整顺序 - 先总结，再使用建议，最后分析结果
+    final orderedSections = _reorderSections(parsedSections);
+
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           _buildHeaderCard(),
-          const SizedBox(height: 16),
-          _buildCuteTextCard(
-            '🌸 喵喵冲突总结',
-            _extractSummary(widget.analysisResult),
-            const Color(0xFF4A4A4A),
+          const SizedBox(height: 20),
+
+          // 按新顺序显示各个部分
+          ...orderedSections.entries.map((entry) {
+            // 根据不同的标题设置不同的颜色和图标
+            IconData icon;
+            Color color;
+            String emoji;
+
+            switch (entry.key.toLowerCase()) {
+              case '分析结果':
+                icon = Icons.analytics_outlined;
+                color = const Color(0xFF9C27B0);
+                emoji = '📊';
+                break;
+              case '总结':
+                icon = Icons.summarize;
+                color = const Color(0xFF4A4A4A);
+                emoji = '✨';
+                break;
+              case '使用建议':
+                icon = Icons.lightbulb_outline;
+                color = const Color(0xFF2196F3);
+                emoji = '💡';
+                break;
+              default:
+                icon = Icons.info_outline;
+                color = const Color(0xFFFF9800);
+                emoji = '🔍';
+            }
+
+            return Column(
+              children: [
+                entry.key.toLowerCase() == '分析结果'
+                    ? _buildAnalysisResultCard(
+                        title: entry.key,
+                        content: entry.value,
+                        icon: icon,
+                        color: color,
+                        emoji: emoji,
+                      )
+                    : _buildSectionCard(
+                        title: entry.key,
+                        content: entry.value,
+                        icon: icon,
+                        color: color,
+                        emoji: emoji,
+                      ),
+                const SizedBox(height: 16),
+              ],
+            );
+          }).toList(),
+
+          Center(
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              decoration: BoxDecoration(
+                color: const Color(0xFFFFB7C5).withOpacity(0.2),
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: const Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text('😺 '),
+                  Text(
+                    '喵星人已为您检测完成',
+                    style: TextStyle(
+                      color: Color(0xFF4A4A4A),
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ],
+              ),
+            ),
           ),
+          const SizedBox(height: 20),
         ],
       ),
     );
   }
 
-  String _extractSummary(String result) {
-    // 提取总结部分
-    final RegExp summaryRegex = RegExp(r'### 总结([\s\S]*?)(?=$)');
-    final summaryMatch = summaryRegex.firstMatch(result);
-    final summaryContent = summaryMatch != null
-        ? summaryMatch.group(1)?.trim() ?? '暂无总结数据喵～'
-        : '暂无总结数据喵～';
+  Map<String, List<Map<String, String>>> _reorderSections(
+      Map<String, List<Map<String, String>>> sections) {
+    // 定义期望的顺序
+    final orderPriority = {
+      '总结': 1,
+      '使用建议': 2,
+      '分析结果': 3,
+      '成分冲突分析': 4, // 这部分会并入分析结果
+    };
 
-    return summaryContent;
+    // 将成分冲突分析部分合并到分析结果中
+    if (sections.containsKey('成分冲突分析')) {
+      if (!sections.containsKey('分析结果')) {
+        sections['分析结果'] = [];
+      }
+      final conflictAnalysis = sections['成分冲突分析'];
+      if (conflictAnalysis != null) {
+        sections['分析结果']?.addAll(conflictAnalysis);
+      }
+      sections.remove('成分冲突分析');
+    }
+
+    // 创建排序后的Map
+    final orderedMap = Map<String, List<Map<String, String>>>.fromEntries(
+      sections.entries.toList()
+        ..sort((a, b) {
+          final aPriority = orderPriority[a.key] ?? 999;
+          final bPriority = orderPriority[b.key] ?? 999;
+          return aPriority.compareTo(bPriority);
+        }),
+    );
+
+    return orderedMap;
   }
 
-  Widget _buildIngredientsView() {
-    // 使用正则表达式提取相互影响部分
-    final RegExp interactionsRegex =
-        RegExp(r'### 1\. 有效成分之间的相互影响([\s\S]*?)(?=###|$)');
-    final interactionsMatch =
-        interactionsRegex.firstMatch(widget.analysisResult);
-    final interactionsContent = interactionsMatch != null
-        ? interactionsMatch.group(1)?.trim() ?? '暂无相互影响数据喵～'
-        : '暂无相互影响数据喵～';
+  Map<String, List<Map<String, String>>> _parseAnalysisResult(String result) {
+    final Map<String, List<Map<String, String>>> sections = {};
 
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _buildCuteCard(
-            '🧪 成分喵喵互动',
-            interactionsContent,
-            color: const Color(0xFF8BC34A),
-          ),
-        ],
-      ),
-    );
-  }
+    // 提取主要部分
+    final mainSectionRegex = RegExp(r'###\s+(.*?)\s*\n([\s\S]*?)(?=###|$)');
+    final mainMatches = mainSectionRegex.allMatches(result);
 
-  Widget _buildRisksView() {
-    // 提取刺激和不建议同时使用部分
-    final RegExp irritationRegex =
-        RegExp(r'### 2\. 可能引起刺激或过敏反应的成分组合([\s\S]*?)(?=###|$)');
-    final avoidRegex = RegExp(r'### 3\. 不建议同时使用的成分([\s\S]*?)(?=###|$)');
-    final skinRiskRegex = RegExp(r'### 4\. 基于用户肌肤状态的具体风险([\s\S]*?)(?=---|$)');
+    for (var match in mainMatches) {
+      final title = match.group(1)?.trim() ?? '';
+      final content = match.group(2)?.trim() ?? '';
 
-    final irritationMatch = irritationRegex.firstMatch(widget.analysisResult);
-    final avoidMatch = avoidRegex.firstMatch(widget.analysisResult);
-    final skinRiskMatch = skinRiskRegex.firstMatch(widget.analysisResult);
+      // 处理子部分（四级标题）
+      final subSectionRegex =
+          RegExp(r'####\s+(.*?)\s*\n([\s\S]*?)(?=####|###|$)');
+      final subMatches = subSectionRegex.allMatches(content);
 
-    final irritationContent =
-        irritationMatch != null ? irritationMatch.group(1)?.trim() ?? '' : '';
-    final avoidContent =
-        avoidMatch != null ? avoidMatch.group(1)?.trim() ?? '' : '';
-    final skinRiskContent =
-        skinRiskMatch != null ? skinRiskMatch.group(1)?.trim() ?? '' : '';
+      List<Map<String, String>> subSections = [];
 
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _buildCuteCard(
-            '⚠️ 炸毛警告',
-            irritationContent,
-            color: const Color(0xFFFF9800),
-          ),
-          const SizedBox(height: 16),
-          _buildCuteCard(
-            '🚫 喵呜禁区',
-            avoidContent,
-            color: const Color(0xFFE91E63),
-          ),
-          const SizedBox(height: 16),
-          _buildCuteCard(
-            '😿 肌肤隐患',
-            skinRiskContent,
-            color: const Color(0xFFFF5722),
-          ),
-        ],
-      ),
-    );
-  }
+      if (subMatches.isNotEmpty) {
+        for (var subMatch in subMatches) {
+          final subTitle = subMatch.group(1)?.trim() ?? '';
+          final subContent = subMatch.group(2)?.trim() ?? '';
 
-  Widget _buildSuggestionsView() {
-    // 提取使用建议部分
-    final RegExp suggestionsRegex = RegExp(r'### 使用建议([\s\S]*?)(?=---|$)');
-    final suggestionsMatch = suggestionsRegex.firstMatch(widget.analysisResult);
-    final suggestionsContent = suggestionsMatch != null
-        ? suggestionsMatch.group(1)?.trim() ?? '暂无使用建议数据喵～'
-        : '暂无使用建议数据喵～';
+          subSections.add({
+            'title': subTitle,
+            'content': subContent,
+          });
+        }
+      } else {
+        // 如果没有子部分，将整个内容作为一个条目
+        subSections.add({
+          'title': '',
+          'content': content,
+        });
+      }
 
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _buildCuteCard(
-            '💡 贴心喵士',
-            suggestionsContent,
-            color: const Color(0xFF2196F3),
-          ),
-        ],
-      ),
-    );
+      sections[title] = subSections;
+    }
+
+    // 如果无法解析出任何部分，尝试更简单的解析方式
+    if (sections.isEmpty) {
+      // 简单的按行解析，寻找以###开头的行作为标题
+      final lines = result.split('\n');
+      String currentTitle = '分析结果';
+      List<String> currentContent = [];
+
+      for (var line in lines) {
+        if (line.startsWith('###')) {
+          // 保存之前的内容
+          if (currentContent.isNotEmpty) {
+            sections[currentTitle] = [
+              {'title': '', 'content': currentContent.join('\n')}
+            ];
+            currentContent = [];
+          }
+
+          // 更新当前标题
+          currentTitle = line.replaceAll(RegExp(r'^###\s+'), '').trim();
+        } else {
+          currentContent.add(line);
+        }
+      }
+
+      // 保存最后一部分内容
+      if (currentContent.isNotEmpty) {
+        sections[currentTitle] = [
+          {'title': '', 'content': currentContent.join('\n')}
+        ];
+      }
+    }
+
+    return sections;
   }
 
   Widget _buildHeaderCard() {
@@ -361,9 +419,15 @@ class _ConflictAnalysisDisplayState extends State<ConflictAnalysisDisplay>
     );
   }
 
-  Widget _buildCuteTextCard(String title, String content, Color textColor) {
+  Widget _buildSectionCard({
+    required String title,
+    required List<Map<String, String>> content,
+    required IconData icon,
+    required Color color,
+    required String emoji,
+  }) {
     return Card(
-      elevation: 2,
+      elevation: 3,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(20),
       ),
@@ -372,10 +436,10 @@ class _ConflictAnalysisDisplayState extends State<ConflictAnalysisDisplay>
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(20),
-          gradient: const LinearGradient(
+          gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
-            colors: [Colors.white, Color(0xFFFFF0F5)],
+            colors: [Colors.white, color.withOpacity(0.1)],
           ),
         ),
         child: Column(
@@ -383,68 +447,22 @@ class _ConflictAnalysisDisplayState extends State<ConflictAnalysisDisplay>
           children: [
             Row(
               children: [
-                Text(title.split(' ')[0]),
-                const SizedBox(width: 8),
-                Text(
-                  title.substring(title.indexOf(' ') + 1),
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: textColor,
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: color.withOpacity(0.1),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Text(
+                    emoji,
+                    style: const TextStyle(fontSize: 20),
                   ),
                 ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            Text(
-              content,
-              style: TextStyle(
-                fontSize: 14,
-                height: 1.5,
-                color: const Color(0xFF666666),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildCuteCard(String title, String content, {required Color color}) {
-    // 将Markdown格式的内容处理一下
-    // 去掉标题，只保留列表项
-    final cleanedContent = content.replaceAll(RegExp(r'#+\s.*'), '').trim();
-
-    // 处理粗体文本
-    List<String> lines = cleanedContent.split('\n');
-
-    return Card(
-      elevation: 2,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Container(
-        width: double.infinity,
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(20),
-          gradient: const LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [Colors.white, Color(0xFFFFF0F5)],
-          ),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Text(title.split(' ')[0]),
-                const SizedBox(width: 8),
+                const SizedBox(width: 12),
                 Text(
-                  title.substring(title.indexOf(' ') + 1),
+                  title,
                   style: TextStyle(
-                    fontSize: 18,
+                    fontSize: 20,
                     fontWeight: FontWeight.bold,
                     color: color,
                   ),
@@ -452,125 +470,348 @@ class _ConflictAnalysisDisplayState extends State<ConflictAnalysisDisplay>
               ],
             ),
             const SizedBox(height: 16),
-            ...lines.map((line) {
-              line = line.trim();
-              if (line.isEmpty) return const SizedBox(height: 8);
-
-              // 处理列表项
-              if (line.startsWith('-')) {
-                final itemText = line.substring(1).trim();
-                // 查找粗体文本：**文本**
-                final boldPattern = RegExp(r'\*\*(.*?)\*\*');
-
-                if (boldPattern.hasMatch(itemText)) {
-                  // 提取粗体文本和普通文本
-                  final boldMatches = boldPattern.allMatches(itemText);
-                  List<TextSpan> textSpans = [];
-                  int lastEnd = 0;
-
-                  for (var match in boldMatches) {
-                    // 添加粗体文本前的普通文本
-                    if (match.start > lastEnd) {
-                      textSpans.add(TextSpan(
-                        text: itemText.substring(lastEnd, match.start),
-                        style: const TextStyle(
-                          color: Color(0xFF666666),
-                        ),
-                      ));
-                    }
-
-                    // 添加粗体文本
-                    textSpans.add(TextSpan(
-                      text: match.group(1),
+            ...content.map((item) {
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  if (item['title']?.isNotEmpty == true) ...[
+                    Text(
+                      item['title']!,
                       style: TextStyle(
+                        fontSize: 16,
                         fontWeight: FontWeight.bold,
                         color: color,
                       ),
-                    ));
-
-                    lastEnd = match.end;
-                  }
-
-                  // 添加最后一个粗体文本后的普通文本
-                  if (lastEnd < itemText.length) {
-                    textSpans.add(TextSpan(
-                      text: itemText.substring(lastEnd),
-                      style: const TextStyle(
-                        color: Color(0xFF666666),
-                      ),
-                    ));
-                  }
-
-                  return Padding(
-                    padding: const EdgeInsets.only(bottom: 8.0),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          "🐾 ",
-                          style: TextStyle(
-                            color: color,
-                            fontSize: 14,
-                          ),
-                        ),
-                        Expanded(
-                          child: RichText(
-                            text: TextSpan(
-                              children: textSpans,
-                              style: const TextStyle(
-                                fontSize: 14,
-                                height: 1.4,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
                     ),
-                  );
-                } else {
-                  // 常规列表项
-                  return Padding(
-                    padding: const EdgeInsets.only(bottom: 8.0),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          "🐾 ",
-                          style: TextStyle(
-                            color: color,
-                            fontSize: 14,
-                          ),
-                        ),
-                        Expanded(
-                          child: Text(
-                            itemText,
-                            style: const TextStyle(
-                              fontSize: 14,
-                              height: 1.4,
-                              color: Color(0xFF666666),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  );
-                }
-              } else {
-                // 普通段落
-                return Padding(
-                  padding: const EdgeInsets.only(bottom: 8.0),
-                  child: Text(
-                    line,
-                    style: const TextStyle(
-                      fontSize: 14,
-                      height: 1.4,
-                      color: Color(0xFF666666),
-                    ),
-                  ),
-                );
-              }
+                    const SizedBox(height: 8),
+                  ],
+                  ..._buildFormattedContent(item['content'] ?? '', color),
+                  const SizedBox(height: 16),
+                ],
+              );
             }).toList(),
           ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildAnalysisResultCard({
+    required String title,
+    required List<Map<String, String>> content,
+    required IconData icon,
+    required Color color,
+    required String emoji,
+  }) {
+    // 提取四个特定的子标题内容
+    final List<Map<String, String>> specialContents = [];
+    final List<Map<String, String>> regularContents = [];
+
+    final specialTitles = [
+      '有效成分之间的相互抵消或降低效果',
+      '可能引起刺激或过敏反应的成分组合',
+      '不建议同时使用的成分',
+      '基于用户肌肤状态的具体风险',
+    ];
+
+    for (var item in content) {
+      final title = item['title']?.trim() ?? '';
+
+      bool isSpecial = false;
+      for (var specialTitle in specialTitles) {
+        if (title.toLowerCase().contains(specialTitle.toLowerCase()) ||
+            specialTitle.toLowerCase().contains(title.toLowerCase())) {
+          isSpecial = true;
+          specialContents.add(item);
+          break;
+        }
+      }
+
+      if (!isSpecial && title.isNotEmpty) {
+        regularContents.add(item);
+      }
+    }
+
+    // 收集无标题内容
+    final noTitleContents =
+        content.where((item) => item['title']?.isEmpty == true).toList();
+
+    return Card(
+      elevation: 3,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(20),
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [Colors.white, color.withOpacity(0.1)],
+          ),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: color.withOpacity(0.1),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Text(
+                    emoji,
+                    style: const TextStyle(fontSize: 20),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Text(
+                  title,
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: color,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+
+            // 先显示无标题内容
+            if (noTitleContents.isNotEmpty) ...[
+              ...noTitleContents.map((item) => Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children:
+                        _buildFormattedContent(item['content'] ?? '', color),
+                  )),
+              const SizedBox(height: 12),
+            ],
+
+            // 特定分析内容
+            if (specialContents.isNotEmpty) ...[
+              ...specialContents.map((item) {
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 16.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            vertical: 4, horizontal: 10),
+                        decoration: BoxDecoration(
+                          color: color.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: Text(
+                          item['title']!,
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: color,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+                      ...(_buildFormattedContent(item['content'] ?? '', color)),
+                    ],
+                  ),
+                );
+              }).toList(),
+            ],
+
+            // 显示其他常规内容
+            if (regularContents.isNotEmpty) ...[
+              ...regularContents.map((item) {
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      item['title']!,
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: color,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    ..._buildFormattedContent(item['content'] ?? '', color),
+                    const SizedBox(height: 16),
+                  ],
+                );
+              }).toList(),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
+  List<Widget> _buildFormattedContent(String content, Color accentColor) {
+    final List<Widget> widgets = [];
+    final lines = content.split('\n');
+
+    for (var i = 0; i < lines.length; i++) {
+      var line = lines[i].trim();
+
+      if (line.isEmpty) {
+        widgets.add(const SizedBox(height: 8));
+        continue;
+      }
+
+      // 处理分隔线
+      if (line.startsWith('---')) {
+        widgets.add(
+          Divider(
+            color: accentColor.withOpacity(0.3),
+            thickness: 1,
+            height: 24,
+          ),
+        );
+        continue;
+      }
+
+      // 处理列表项
+      if (line.startsWith('-') || line.startsWith('*')) {
+        final itemText = line.substring(1).trim();
+        widgets.add(
+          Padding(
+            padding: const EdgeInsets.only(bottom: 8.0),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  "🐾 ",
+                  style: TextStyle(
+                    color: accentColor,
+                    fontSize: 14,
+                  ),
+                ),
+                Expanded(
+                  child: _buildRichText(itemText, accentColor),
+                ),
+              ],
+            ),
+          ),
+        );
+        continue;
+      }
+
+      // 处理数字列表项
+      final numberListMatch = RegExp(r'^(\d+)\.\s+(.*)$').firstMatch(line);
+      if (numberListMatch != null) {
+        final number = numberListMatch.group(1);
+        final itemText = numberListMatch.group(2) ?? '';
+        widgets.add(
+          Padding(
+            padding: const EdgeInsets.only(bottom: 8.0),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  width: 24,
+                  height: 24,
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    color: accentColor.withOpacity(0.1),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Text(
+                    number ?? '',
+                    style: TextStyle(
+                      color: accentColor,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 12,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: _buildRichText(itemText, accentColor),
+                ),
+              ],
+            ),
+          ),
+        );
+        continue;
+      }
+
+      // 普通段落文本
+      widgets.add(
+        Padding(
+          padding: const EdgeInsets.only(bottom: 8.0),
+          child: _buildRichText(line, accentColor),
+        ),
+      );
+    }
+
+    return widgets;
+  }
+
+  Widget _buildRichText(String text, Color accentColor) {
+    // 匹配粗体文本: **文本** 或 __文本__
+    final boldPattern = RegExp(r'\*\*(.*?)\*\*|__(.*?)__');
+    final boldMatches = boldPattern.allMatches(text);
+
+    // 如果没有粗体文本，直接返回普通文本
+    if (boldMatches.isEmpty) {
+      return Text(
+        text,
+        style: const TextStyle(
+          fontSize: 14,
+          height: 1.4,
+          color: Color(0xFF666666),
+        ),
+      );
+    }
+
+    // 处理包含粗体的富文本
+    List<TextSpan> textSpans = [];
+    int lastEnd = 0;
+
+    for (var match in boldMatches) {
+      // 添加粗体文本前的普通文本
+      if (match.start > lastEnd) {
+        textSpans.add(TextSpan(
+          text: text.substring(lastEnd, match.start),
+          style: const TextStyle(
+            color: Color(0xFF666666),
+          ),
+        ));
+      }
+
+      // 添加粗体文本
+      final boldText = match.group(1) ?? match.group(2) ?? '';
+      textSpans.add(TextSpan(
+        text: boldText,
+        style: TextStyle(
+          fontWeight: FontWeight.bold,
+          color: accentColor,
+        ),
+      ));
+
+      lastEnd = match.end;
+    }
+
+    // 添加最后一个粗体文本后的普通文本
+    if (lastEnd < text.length) {
+      textSpans.add(TextSpan(
+        text: text.substring(lastEnd),
+        style: const TextStyle(
+          color: Color(0xFF666666),
+        ),
+      ));
+    }
+
+    return RichText(
+      text: TextSpan(
+        children: textSpans,
+        style: const TextStyle(
+          fontSize: 14,
+          height: 1.4,
         ),
       ),
     );
