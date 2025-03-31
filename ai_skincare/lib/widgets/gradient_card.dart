@@ -12,7 +12,7 @@ class GradientCard extends StatelessWidget {
   final void Function()? onTap;
 
   const GradientCard({
-    Key? key,
+    super.key,
     required this.child,
     this.padding = const EdgeInsets.all(16),
     this.gradientColors = const [
@@ -24,7 +24,7 @@ class GradientCard extends StatelessWidget {
     this.width,
     this.shadow,
     this.onTap,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -40,16 +40,15 @@ class GradientCard extends StatelessWidget {
             end: Alignment.bottomRight,
           ),
           borderRadius: BorderRadius.circular(borderRadius),
-          boxShadow:
-              shadow != null
-                  ? [shadow!]
-                  : [
-                    BoxShadow(
-                      color: gradientColors.last.withOpacity(0.3),
-                      blurRadius: 10,
-                      offset: const Offset(0, 5),
-                    ),
-                  ],
+          boxShadow: shadow != null
+              ? [shadow!]
+              : [
+                  BoxShadow(
+                    color: gradientColors.last.withOpacity(0.3),
+                    blurRadius: 10,
+                    offset: const Offset(0, 5),
+                  ),
+                ],
         ),
         padding: padding,
         child: child,

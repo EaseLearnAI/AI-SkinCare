@@ -3,68 +3,56 @@ import 'ingredient_model.dart';
 class ProductModel {
   final String id;
   final String name;
-  final String brand;
+  final String brandName;
+  final String imageUrl;
+  final String description;
   final String category;
-  final String? subCategory;
-  final String? imageUrl;
-  final String? description;
-  final double? price;
-  final String? currency;
-  final String? size;
-  final double? rating;
-  final int? reviewCount;
-  final List<IngredientModel>? ingredients;
-  final ProductAnalysisModel? analysis;
-  final String createdAt;
-  final String updatedAt;
+  final List<IngredientModel> ingredients;
+  final Map<String, dynamic>? analysisResult;
+  final double rating;
+  final int reviewCount;
+  final double price;
+  final String currency;
+  final bool isFavorite;
 
   ProductModel({
     required this.id,
     required this.name,
-    required this.brand,
+    required this.brandName,
+    required this.imageUrl,
+    required this.description,
     required this.category,
-    this.subCategory,
-    this.imageUrl,
-    this.description,
-    this.price,
-    this.currency,
-    this.size,
-    this.rating,
-    this.reviewCount,
-    this.ingredients,
-    this.analysis,
-    required this.createdAt,
-    required this.updatedAt,
+    required this.ingredients,
+    this.analysisResult,
+    this.rating = 0.0,
+    this.reviewCount = 0,
+    this.price = 0.0,
+    this.currency = "CNY",
+    this.isFavorite = false,
   });
 
   factory ProductModel.fromJson(Map<String, dynamic> json) {
-    List<IngredientModel>? ingredients;
+    List<IngredientModel> ingredientsList = [];
     if (json['ingredients'] != null) {
-      ingredients = List<IngredientModel>.from(
-        json['ingredients'].map((x) => IngredientModel.fromJson(x)),
-      );
+      ingredientsList = (json['ingredients'] as List)
+          .map((i) => IngredientModel.fromJson(i))
+          .toList();
     }
 
     return ProductModel(
-      id: json['id'],
-      name: json['name'],
-      brand: json['brand'],
-      category: json['category'],
-      subCategory: json['subCategory'],
-      imageUrl: json['imageUrl'],
-      description: json['description'],
-      price: json['price']?.toDouble(),
-      currency: json['currency'],
-      size: json['size'],
-      rating: json['rating']?.toDouble(),
-      reviewCount: json['reviewCount'],
-      ingredients: ingredients,
-      analysis:
-          json['analysis'] != null
-              ? ProductAnalysisModel.fromJson(json['analysis'])
-              : null,
-      createdAt: json['createdAt'],
-      updatedAt: json['updatedAt'],
+      id: json['id'] ?? '',
+      name: json['name'] ?? '',
+      brandName: json['brandName'] ?? json['brand'] ?? json['brand_name'] ?? '',
+      imageUrl: json['imageUrl'] ?? json['image_url'] ?? '',
+      description: json['description'] ?? '',
+      category: json['category'] ?? '',
+      ingredients: ingredientsList,
+      analysisResult: json['analysisResult'] ?? json['analysis_result'],
+      rating: (json['rating'] is num) ? json['rating'].toDouble() : 0.0,
+      reviewCount: json['reviewCount'] ?? json['review_count'] ?? 0,
+      price: (json['price'] is num) ? json['price'].toDouble() : 0.0,
+      currency: json['currency'] ?? 'CNY',
+      isFavorite: json['isFavorite'] ?? json['is_favorite'] ?? false,
     );
   }
 
@@ -72,21 +60,50 @@ class ProductModel {
     return {
       'id': id,
       'name': name,
-      'brand': brand,
-      'category': category,
-      'subCategory': subCategory,
-      'imageUrl': imageUrl,
+      'brand_name': brandName,
+      'image_url': imageUrl,
       'description': description,
+      'category': category,
+      'ingredients': ingredients.map((i) => i.toJson()).toList(),
+      'analysis_result': analysisResult,
+      'rating': rating,
+      'review_count': reviewCount,
       'price': price,
       'currency': currency,
-      'size': size,
-      'rating': rating,
-      'reviewCount': reviewCount,
-      'ingredients': ingredients?.map((x) => x.toJson()).toList(),
-      'analysis': analysis?.toJson(),
-      'createdAt': createdAt,
-      'updatedAt': updatedAt,
+      'is_favorite': isFavorite,
     };
+  }
+
+  ProductModel copyWith({
+    String? id,
+    String? name,
+    String? brandName,
+    String? imageUrl,
+    String? description,
+    String? category,
+    List<IngredientModel>? ingredients,
+    Map<String, dynamic>? analysisResult,
+    double? rating,
+    int? reviewCount,
+    double? price,
+    String? currency,
+    bool? isFavorite,
+  }) {
+    return ProductModel(
+      id: id ?? this.id,
+      name: name ?? this.name,
+      brandName: brandName ?? this.brandName,
+      imageUrl: imageUrl ?? this.imageUrl,
+      description: description ?? this.description,
+      category: category ?? this.category,
+      ingredients: ingredients ?? this.ingredients,
+      analysisResult: analysisResult ?? this.analysisResult,
+      rating: rating ?? this.rating,
+      reviewCount: reviewCount ?? this.reviewCount,
+      price: price ?? this.price,
+      currency: currency ?? this.currency,
+      isFavorite: isFavorite ?? this.isFavorite,
+    );
   }
 }
 
@@ -94,16 +111,12 @@ class ProductAnalysisModel {
   final int safetyScore;
   final int effectivenessScore;
   final int suitabilityScore;
-  final List<String>? goodFor;
-  final List<String>? notRecommendedFor;
   final List<HighlightModel>? highlights;
 
   ProductAnalysisModel({
     required this.safetyScore,
     required this.effectivenessScore,
     required this.suitabilityScore,
-    this.goodFor,
-    this.notRecommendedFor,
     this.highlights,
   });
 
@@ -119,12 +132,6 @@ class ProductAnalysisModel {
       safetyScore: json['safetyScore'],
       effectivenessScore: json['effectivenessScore'],
       suitabilityScore: json['suitabilityScore'],
-      goodFor:
-          json['goodFor'] != null ? List<String>.from(json['goodFor']) : null,
-      notRecommendedFor:
-          json['notRecommendedFor'] != null
-              ? List<String>.from(json['notRecommendedFor'])
-              : null,
       highlights: highlights,
     );
   }
@@ -134,8 +141,6 @@ class ProductAnalysisModel {
       'safetyScore': safetyScore,
       'effectivenessScore': effectivenessScore,
       'suitabilityScore': suitabilityScore,
-      'goodFor': goodFor,
-      'notRecommendedFor': notRecommendedFor,
       'highlights': highlights?.map((x) => x.toJson()).toList(),
     };
   }

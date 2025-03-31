@@ -14,7 +14,7 @@ class ProductCard extends StatelessWidget {
   final VoidCallback? onLongPress;
 
   const ProductCard({
-    Key? key,
+    super.key,
     required this.imageUrl,
     required this.name,
     required this.brand,
@@ -24,7 +24,7 @@ class ProductCard extends StatelessWidget {
     this.usageCount,
     this.onTap,
     this.onLongPress,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -57,25 +57,23 @@ class ProductCard extends StatelessWidget {
                 child: CachedNetworkImage(
                   imageUrl: imageUrl,
                   fit: BoxFit.cover,
-                  placeholder:
-                      (context, url) => Container(
-                        color: AppTheme.sakuraPink100,
-                        child: const Center(
-                          child: CircularProgressIndicator(
-                            valueColor: AlwaysStoppedAnimation<Color>(
-                              AppTheme.sakuraPink500,
-                            ),
-                          ),
+                  placeholder: (context, url) => Container(
+                    color: AppTheme.sakuraPink100,
+                    child: const Center(
+                      child: CircularProgressIndicator(
+                        valueColor: AlwaysStoppedAnimation<Color>(
+                          AppTheme.sakuraPink500,
                         ),
                       ),
-                  errorWidget:
-                      (context, url, error) => Container(
-                        color: AppTheme.sakuraPink100,
-                        child: const Icon(
-                          Icons.error_outline,
-                          color: AppTheme.sakuraPink500,
-                        ),
-                      ),
+                    ),
+                  ),
+                  errorWidget: (context, url, error) => Container(
+                    color: AppTheme.sakuraPink100,
+                    child: const Icon(
+                      Icons.error_outline,
+                      color: AppTheme.sakuraPink500,
+                    ),
+                  ),
                 ),
               ),
             ),

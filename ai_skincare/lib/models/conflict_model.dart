@@ -1,169 +1,312 @@
 import 'ingredient_model.dart';
 import 'product_model.dart';
 
-class ConflictModel {
+class ConflictDetectionModel {
   final String id;
-  final List<List<String>> ingredientPair;
-  final String level;
-  final String description;
-  final List<String> recommendations;
-  final String? source;
+  final String userId;
+  final String type; // 'products' 或 'ingredients'
+  final ConflictInputs inputs;
+  final List<ConflictDetail> conflicts;
+  final List<String> compatibleGroups;
+  final String? usageSuggestion;
+  final String? aiPrompt;
+  final String? aiResponse;
   final String createdAt;
-  final String updatedAt;
 
-  ConflictModel({
+  ConflictDetectionModel({
     required this.id,
-    required this.ingredientPair,
-    required this.level,
-    required this.description,
-    required this.recommendations,
-    this.source,
+    required this.userId,
+    required this.type,
+    required this.inputs,
+    required this.conflicts,
+    required this.compatibleGroups,
+    this.usageSuggestion,
+    this.aiPrompt,
+    this.aiResponse,
     required this.createdAt,
-    required this.updatedAt,
   });
 
-  factory ConflictModel.fromJson(Map<String, dynamic> json) {
-    return ConflictModel(
-      id: json['id'],
-      ingredientPair: List<List<String>>.from(
-        json['ingredientPair'].map((x) => List<String>.from(x)),
+  factory ConflictDetectionModel.fromJson(Map<String, dynamic> json) {
+    // 处理MongoDB的_id到id的映射
+    String id = json['id'] ?? json['_id'] ?? '';
+
+    return ConflictDetectionModel(
+      id: id,
+      userId: json['userId'],
+      type: json['type'],
+      inputs: ConflictInputs.fromJson(json['inputs']),
+      conflicts: List<ConflictDetail>.from(
+        json['conflicts'].map((x) => ConflictDetail.fromJson(x)),
       ),
-      level: json['level'],
-      description: json['description'],
-      recommendations: List<String>.from(json['recommendations']),
-      source: json['source'],
-      createdAt: json['createdAt'],
-      updatedAt: json['updatedAt'],
+      compatibleGroups: List<String>.from(json['compatibleGroups']),
+      usageSuggestion: json['usageSuggestion'],
+      aiPrompt: json['aiPrompt'],
+      aiResponse: json['aiResponse'],
+      createdAt: json['createdAt'] ?? json['created_at'] ?? '',
     );
   }
 
   Map<String, dynamic> toJson() {
     return {
       'id': id,
-      'ingredientPair': ingredientPair,
-      'level': level,
-      'description': description,
-      'recommendations': recommendations,
-      'source': source,
+      'userId': userId,
+      'type': type,
+      'inputs': inputs.toJson(),
+      'conflicts': conflicts.map((x) => x.toJson()).toList(),
+      'compatibleGroups': compatibleGroups,
+      'usageSuggestion': usageSuggestion,
+      'aiPrompt': aiPrompt,
+      'aiResponse': aiResponse,
       'createdAt': createdAt,
-      'updatedAt': updatedAt,
+    };
+  }
+
+  // 转换为MongoDB存储格式
+  Map<String, dynamic> toMongoJson() {
+    return {
+      'userId': userId,
+      'type': type,
+      'inputs': inputs.toJson(),
+      'conflicts': conflicts.map((x) => x.toJson()).toList(),
+      'compatibleGroups': compatibleGroups,
+      'usageSuggestion': usageSuggestion,
+      'aiPrompt': aiPrompt,
+      'aiResponse': aiResponse,
+      'created_at': createdAt,
     };
   }
 }
 
-class ConflictCheckResult {
-  final List<ConflictDetail> conflicts;
-  final List<List<IngredientModel>> compatibleGroups;
-  final String? usageSuggestion;
+class ConflictInputs {
+  final List<String>? products;
+  final List<String>? ingredientLists;
+  final String? skinType;
+  final String? skinStatus;
 
-  ConflictCheckResult({
-    required this.conflicts,
-    required this.compatibleGroups,
-    this.usageSuggestion,
+  ConflictInputs({
+    this.products,
+    this.ingredientLists,
+    this.skinType,
+    this.skinStatus,
   });
 
-  factory ConflictCheckResult.fromJson(Map<String, dynamic> json) {
-    return ConflictCheckResult(
-      conflicts: List<ConflictDetail>.from(
-        json['conflicts'].map((x) => ConflictDetail.fromJson(x)),
-      ),
-      compatibleGroups: List<List<IngredientModel>>.from(
-        json['compatibleGroups'].map(
-          (x) => List<IngredientModel>.from(
-            x.map((y) => IngredientModel.fromJson(y)),
-          ),
-        ),
-      ),
-      usageSuggestion: json['usageSuggestion'],
+  factory ConflictInputs.fromJson(Map<String, dynamic> json) {
+    return ConflictInputs(
+      products:
+          json['products'] != null ? List<String>.from(json['products']) : null,
+      ingredientLists:
+          json['ingredientLists'] != null
+              ? List<String>.from(json['ingredientLists'])
+              : null,
+      skinType: json['skinType'],
+      skinStatus: json['skinStatus'],
     );
   }
 
   Map<String, dynamic> toJson() {
     return {
-      'conflicts': conflicts.map((x) => x.toJson()).toList(),
-      'compatibleGroups':
-          compatibleGroups
-              .map(
-                (group) =>
-                    group.map((ingredient) => ingredient.toJson()).toList(),
-              )
-              .toList(),
-      'usageSuggestion': usageSuggestion,
+      'products': products,
+      'ingredientLists': ingredientLists,
+      'skinType': skinType,
+      'skinStatus': skinStatus,
     };
   }
 }
 
 class ConflictDetail {
-  final List<IngredientModel> ingredientPair;
-  final String level;
+  final List<dynamic> items; // 可能是产品ID列表或成分列表索引
+  final List<String> problematicItems; // 具体冲突的成分
+  final String level; // 冲突等级（severe/moderate/mild）
   final String description;
-  final List<String> recommendations;
+  final String? aiRecommendations;
 
   ConflictDetail({
-    required this.ingredientPair,
+    required this.items,
+    required this.problematicItems,
     required this.level,
     required this.description,
-    required this.recommendations,
+    this.aiRecommendations,
   });
 
   factory ConflictDetail.fromJson(Map<String, dynamic> json) {
     return ConflictDetail(
-      ingredientPair: List<IngredientModel>.from(
-        json['ingredientPair'].map((x) => IngredientModel.fromJson(x)),
-      ),
+      items: json['items'],
+      problematicItems: List<String>.from(json['problematicItems']),
       level: json['level'],
       description: json['description'],
-      recommendations: List<String>.from(json['recommendations']),
+      aiRecommendations: json['aiRecommendations'],
     );
   }
 
   Map<String, dynamic> toJson() {
     return {
-      'ingredientPair': ingredientPair.map((x) => x.toJson()).toList(),
+      'items': items,
+      'problematicItems': problematicItems,
       'level': level,
       'description': description,
-      'recommendations': recommendations,
+      'aiRecommendations': aiRecommendations,
     };
   }
 }
 
-class ProductConflictResult extends ConflictCheckResult {
+// 产品冲突检测结果
+class ProductConflictResult {
   final List<ProductModel> products;
+  final List<ConflictItem> conflicts;
+  final String summary;
+  final List<String> recommendations;
+  final bool hasConflict;
 
   ProductConflictResult({
     required this.products,
-    required List<ConflictDetail> conflicts,
-    required List<List<IngredientModel>> compatibleGroups,
-    String? usageSuggestion,
-  }) : super(
-         conflicts: conflicts,
-         compatibleGroups: compatibleGroups,
-         usageSuggestion: usageSuggestion,
-       );
+    required this.conflicts,
+    required this.summary,
+    required this.recommendations,
+    required this.hasConflict,
+  });
 
   factory ProductConflictResult.fromJson(Map<String, dynamic> json) {
+    List<ProductModel> productsList = [];
+    if (json['products'] != null) {
+      productsList =
+          (json['products'] as List)
+              .map((p) => ProductModel.fromJson(p))
+              .toList();
+    }
+
+    List<ConflictItem> conflictsList = [];
+    if (json['conflicts'] != null) {
+      conflictsList =
+          (json['conflicts'] as List)
+              .map((c) => ConflictItem.fromJson(c))
+              .toList();
+    }
+
+    List<String> recommendationsList = [];
+    if (json['recommendations'] != null) {
+      recommendationsList = List<String>.from(json['recommendations']);
+    }
+
     return ProductConflictResult(
-      products: List<ProductModel>.from(
-        json['products'].map((x) => ProductModel.fromJson(x)),
-      ),
-      conflicts: List<ConflictDetail>.from(
-        json['conflicts'].map((x) => ConflictDetail.fromJson(x)),
-      ),
-      compatibleGroups: List<List<IngredientModel>>.from(
-        json['compatibleGroups'].map(
-          (x) => List<IngredientModel>.from(
-            x.map((y) => IngredientModel.fromJson(y)),
-          ),
-        ),
-      ),
-      usageSuggestion: json['usageSuggestion'],
+      products: productsList,
+      conflicts: conflictsList,
+      summary: json['summary'] ?? '',
+      recommendations: recommendationsList,
+      hasConflict: json['has_conflict'] ?? false,
     );
   }
 
-  @override
   Map<String, dynamic> toJson() {
-    final baseJson = super.toJson();
-    baseJson['products'] = products.map((x) => x.toJson()).toList();
-    return baseJson;
+    return {
+      'products': products.map((p) => p.toJson()).toList(),
+      'conflicts': conflicts.map((c) => c.toJson()).toList(),
+      'summary': summary,
+      'recommendations': recommendations,
+      'has_conflict': hasConflict,
+    };
+  }
+}
+
+// 成分冲突检测结果
+class IngredientConflictResult {
+  final List<IngredientModel> ingredients;
+  final List<ConflictItem> conflicts;
+  final String summary;
+  final List<String> recommendations;
+  final bool hasConflict;
+
+  IngredientConflictResult({
+    required this.ingredients,
+    required this.conflicts,
+    required this.summary,
+    required this.recommendations,
+    required this.hasConflict,
+  });
+
+  factory IngredientConflictResult.fromJson(Map<String, dynamic> json) {
+    List<IngredientModel> ingredientsList = [];
+    if (json['ingredients'] != null) {
+      ingredientsList =
+          (json['ingredients'] as List)
+              .map((i) => IngredientModel.fromJson(i))
+              .toList();
+    }
+
+    List<ConflictItem> conflictsList = [];
+    if (json['conflicts'] != null) {
+      conflictsList =
+          (json['conflicts'] as List)
+              .map((c) => ConflictItem.fromJson(c))
+              .toList();
+    }
+
+    List<String> recommendationsList = [];
+    if (json['recommendations'] != null) {
+      recommendationsList = List<String>.from(json['recommendations']);
+    }
+
+    return IngredientConflictResult(
+      ingredients: ingredientsList,
+      conflicts: conflictsList,
+      summary: json['summary'] ?? '',
+      recommendations: recommendationsList,
+      hasConflict: json['has_conflict'] ?? false,
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'ingredients': ingredients.map((i) => i.toJson()).toList(),
+      'conflicts': conflicts.map((c) => c.toJson()).toList(),
+      'summary': summary,
+      'recommendations': recommendations,
+      'has_conflict': hasConflict,
+    };
+  }
+}
+
+// 冲突项
+class ConflictItem {
+  final String id;
+  final String title;
+  final String description;
+  final String severity; // low, medium, high
+  final List<String> conflictingItems; // 可以是成分ID或产品ID
+  final String? resolutionSuggestion;
+
+  ConflictItem({
+    required this.id,
+    required this.title,
+    required this.description,
+    required this.severity,
+    required this.conflictingItems,
+    this.resolutionSuggestion,
+  });
+
+  factory ConflictItem.fromJson(Map<String, dynamic> json) {
+    List<String> conflictingItemsList = [];
+    if (json['conflicting_items'] != null) {
+      conflictingItemsList = List<String>.from(json['conflicting_items']);
+    }
+
+    return ConflictItem(
+      id: json['id'] ?? '',
+      title: json['title'] ?? '',
+      description: json['description'] ?? '',
+      severity: json['severity'] ?? 'medium',
+      conflictingItems: conflictingItemsList,
+      resolutionSuggestion: json['resolution_suggestion'],
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'title': title,
+      'description': description,
+      'severity': severity,
+      'conflicting_items': conflictingItems,
+      'resolution_suggestion': resolutionSuggestion,
+    };
   }
 }

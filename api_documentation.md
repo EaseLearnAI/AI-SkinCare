@@ -2,7 +2,7 @@
 
 ## 概述
 
-本文档详细描述了AI肌肤检测应用程序的后端API接口。该应用程序提供肌肤分析、产品分析、成分冲突检测等功能，所有API均基于RESTful架构设计，返回JSON格式数据。
+本文档详细描述了AI肌肤检测应用程序的后端API接口。该应用程序提供肌肤分析、产品分析、成分冲突检测等功能，所有API均基于RESTful架构设计，返回JSON格式数据。该后端使用Python Flask框架实现，数据存储使用MongoDB。
 
 ## 基础信息
 
@@ -31,6 +31,7 @@
 - `RESOURCE_NOT_FOUND`: 资源不存在
 - `VALIDATION_ERROR`: 请求参数验证失败
 - `SERVER_ERROR`: 服务器内部错误
+- `AI_SERVICE_ERROR`: AI服务调用失败
 
 ## API 端点
 
@@ -89,6 +90,7 @@
       "username": "用户名",
       "email": "邮箱地址",
       "avatarUrl": "头像URL",
+      "skinType": "肌肤类型",
       "lastLoginAt": "最后登录时间"
     },
     "token": "JWT令牌"
@@ -114,8 +116,18 @@
     "phoneNumber": "手机号码",
     "avatarUrl": "头像URL",
     "skinType": "肌肤类型",
+    "skinStatus": "肌肤状态",
+    "skinAiSummary": "肌肤AI总结",
     "concerns": ["干燥", "敏感"],
     "favorites": ["产品ID列表"],
+    "products": [
+      {
+        "id": "产品ID",
+        "name": "产品名称",
+        "ingredients": "产品成分",
+        "aiSummary": "AI总结"
+      }
+    ],
     "createdAt": "创建时间",
     "lastLoginAt": "最后登录时间"
   }
@@ -133,6 +145,7 @@
   "username": "新用户名",
   "avatarUrl": "新头像URL",
   "skinType": "新肌肤类型",
+  "skinStatus": "新肌肤状态",
   "concerns": ["新肌肤问题列表"]
 }
 ```
@@ -146,6 +159,7 @@
     "email": "邮箱地址",
     "avatarUrl": "更新后的头像URL",
     "skinType": "更新后的肌肤类型",
+    "skinStatus": "更新后的肌肤状态",
     "concerns": ["更新后的肌肤问题列表"],
     "updatedAt": "更新时间"
   }
@@ -162,29 +176,29 @@
 - **请求体**: 
   - `Content-Type: multipart/form-data`
   - `image`: 图片文件
-  - `quizData`: 问卷数据JSON字符串（可选）
+  - `skinStatus` (可选): 用户描述的肌肤状态
 - **响应**:
 ```json
 {
   "success": true,
   "data": {
     "analysisId": "分析记录ID",
+    "imageUrl": "分析图片URL",
+    "thumbnailUrl": "缩略图URL",
     "status": "completed",
     "results": {
       "hydration": {
         "value": 75,
-        "status": "皮肤水分充足，继续保持喵～",
-        "trend": "+5%",
-        "trendUp": true
+        "status": "皮肤水分充足"
       },
       "oil": {
         "value": 60,
-        "status": "T区油分略偏高，建议使用控油产品喵～"
+        "status": "T区油分略偏高，建议使用控油产品"
       },
       "sensitivity": {
         "value": 2,
         "maxValue": 5,
-        "status": "轻度敏感，建议使用温和产品喵～"
+        "status": "轻度敏感，建议使用温和产品"
       },
       "pores": {
         "value": 30,
@@ -199,6 +213,7 @@
         "status": "轻微色素沉着"
       }
     },
+    "skinAiSummary": "AI生成的肌肤状态总结和护理建议",
     "recommendations": [
       {
         "id": "推荐ID",
@@ -208,14 +223,6 @@
         "priority": "高",
         "timing": "建议立即使用",
         "recommendedProducts": ["产品ID列表"]
-      },
-      {
-        "id": "推荐ID",
-        "title": "防晒提醒",
-        "description": "今日紫外线较强，记得涂防晒喵～",
-        "iconType": "sun",
-        "priority": "中",
-        "timing": "外出前使用"
       }
     ],
     "createdAt": "创建时间"
@@ -243,6 +250,7 @@
       {
         "id": "分析记录ID",
         "thumbnailUrl": "分析图片缩略图URL",
+        "skinAiSummary": "AI生成的肌肤状态总结摘要",
         "createdAt": "创建时间",
         "mainResults": {
           "hydration": 75,
@@ -266,40 +274,29 @@
 
 ### 4. 产品分析
 
-#### 4.1 扫描产品
+#### 4.1 提交产品信息分析
 
-- **URL**: `/product-analysis/scan`
+- **URL**: `/product-analysis/analyze`
 - **方法**: `POST`
-- **描述**: 上传产品图片进行识别和分析
+- **描述**: 提交产品名称和成分信息进行AI分析
 - **请求体**: 
-  - `Content-Type: multipart/form-data`
-  - `image`: 产品图片文件
+```json
+{
+  "name": "产品名称",
+  "ingredients": "产品成分列表文本",
+  "skinType": "用户肌肤类型", 
+  "skinStatus": "用户肌肤状态"
+}
+```
 - **响应**:
 ```json
 {
   "success": true,
   "data": {
-    "analysisId": "分析记录ID",
-    "status": "completed",
-    "product": {
-      "id": "产品ID",
-      "name": "产品名称",
-      "brand": "品牌名称",
-      "category": "产品类别",
-      "imageUrl": "产品图片URL",
-      "description": "产品描述"
-    },
-    "ingredients": [
-      {
-        "id": "成分ID",
-        "name": "成分名称",
-        "function": "成分功效",
-        "safetyLevel": 1,
-        "irritationRisk": "低",
-        "acneRisk": "低",
-        "description": "成分描述"
-      }
-    ],
+    "productId": "产品ID",
+    "name": "产品名称",
+    "ingredients": "产品成分",
+    "aiSummary": "AI分析生成的产品功效和潜在危害的总结",
     "analysis": {
       "safetyScore": 85,
       "effectivenessScore": 90,
@@ -320,15 +317,12 @@
 }
 ```
 
-#### 4.2 搜索产品
+#### 4.2 获取用户产品列表
 
-- **URL**: `/products/search`
+- **URL**: `/products/user`
 - **方法**: `GET`
-- **描述**: 搜索产品数据库
+- **描述**: 获取用户添加的产品列表
 - **请求参数**:
-  - `query`: 搜索关键词
-  - `category`: 产品类别（可选）
-  - `brand`: 品牌（可选）
   - `page`: 页码（默认1）
   - `limit`: 每页数量（默认10）
 - **响应**:
@@ -343,11 +337,10 @@
       {
         "id": "产品ID",
         "name": "产品名称",
-        "brand": "品牌名称",
-        "category": "产品类别",
-        "imageUrl": "产品图片URL",
-        "rating": 4.5,
-        "reviewCount": 120
+        "ingredients": "产品成分摘要（前30个字符）",
+        "aiSummary": "AI分析摘要（前50个字符）",
+        "safetyScore": 85,
+        "createdAt": "创建时间"
       }
     ]
   }
@@ -368,134 +361,93 @@
   "data": {
     "id": "产品ID",
     "name": "产品名称",
-    "brand": "品牌名称",
-    "category": "产品类别",
-    "subCategory": "产品子类别",
-    "imageUrl": "产品图片URL",
-    "description": "产品描述",
-    "price": 299.00,
-    "currency": "CNY",
-    "size": "50ml",
-    "rating": 4.5,
-    "reviewCount": 120,
-    "ingredients": [
-      {
-        "id": "成分ID",
-        "name": "成分名称",
-        "function": "成分功效",
-        "safetyLevel": 1,
-        "irritationRisk": "低",
-        "acneRisk": "低"
-      }
-    ],
+    "ingredients": "产品完整成分列表",
+    "aiSummary": "AI分析生成的产品功效和潜在危害的总结",
     "analysis": {
       "safetyScore": 85,
       "effectivenessScore": 90,
       "suitabilityScore": 75,
-      "goodFor": ["干性肌肤", "缺水肌肤"],
-      "notRecommendedFor": ["油性肌肤"]
+      "highlights": [
+        {
+          "type": "good",
+          "description": "含有多种保湿成分，适合干性肌肤"
+        },
+        {
+          "type": "warning",
+          "description": "含有酒精，可能对敏感肌不友好"
+        }
+      ]
     },
-    "reviews": [
-      {
-        "id": "评论ID",
-        "userId": "用户ID",
-        "username": "用户名",
-        "rating": 5,
-        "content": "评论内容",
-        "createdAt": "评论时间"
-      }
-    ]
+    "suitableFor": ["干性肌肤", "缺水肌肤"],
+    "notSuitableFor": ["油性肌肤"],
+    "createdAt": "创建时间",
+    "updatedAt": "更新时间"
   }
 }
 ```
 
-### 5. 成分分析
+### 5. 成分冲突检测
 
-#### 5.1 成分详情
+#### 5.1 检测产品冲突
 
-- **URL**: `/ingredients/{ingredientId}`
-- **方法**: `GET`
-- **描述**: 获取成分详细信息
-- **请求参数**:
-  - `ingredientId`: 成分ID
-- **响应**:
-```json
-{
-  "success": true,
-  "data": {
-    "id": "成分ID",
-    "name": "成分名称",
-    "alias": ["别名1", "别名2"],
-    "engName": "英文名称",
-    "casNumber": "CAS号",
-    "category": "成分类别",
-    "function": "主要功效",
-    "description": "详细描述",
-    "safetyLevel": 1,
-    "safetyDescription": "安全等级描述",
-    "irritationRisk": "低",
-    "acneRisk": "低",
-    "allergicRisk": "低",
-    "pregnancySafe": true,
-    "researchPapers": ["研究论文引用"],
-    "suitableSkinTypes": ["适合的肌肤类型"],
-    "notSuitableSkinTypes": ["不适合的肌肤类型"],
-    "commonProducts": [
-      {
-        "id": "产品ID",
-        "name": "产品名称",
-        "brand": "品牌名称",
-        "imageUrl": "产品图片URL"
-      }
-    ]
-  }
-}
-```
-
-#### 5.2 成分搜索
-
-- **URL**: `/ingredients/search`
-- **方法**: `GET`
-- **描述**: 搜索成分数据库
-- **请求参数**:
-  - `query`: 搜索关键词
-  - `category`: 成分类别（可选）
-  - `function`: 成分功效（可选）
-  - `page`: 页码（默认1）
-  - `limit`: 每页数量（默认10）
-- **响应**:
-```json
-{
-  "success": true,
-  "data": {
-    "total": 总记录数,
-    "pages": 总页数,
-    "current": 当前页码,
-    "records": [
-      {
-        "id": "成分ID",
-        "name": "成分名称",
-        "engName": "英文名称",
-        "function": "主要功效",
-        "safetyLevel": 1,
-        "irritationRisk": "低"
-      }
-    ]
-  }
-}
-```
-
-### 6. 成分冲突检测
-
-#### 6.1 检测成分冲突
-
-- **URL**: `/conflict-detection/check`
+- **URL**: `/conflict-detection/products`
 - **方法**: `POST`
-- **描述**: 检测多个成分之间可能存在的冲突
+- **描述**: 检测多个产品之间可能存在的成分冲突
 - **请求体**:
 ```json
 {
-  "ingredientIds": ["成分ID列表"]
+  "productIds": ["产品ID列表"],
+  "skinType": "用户肌肤类型",
+  "skinStatus": "用户肌肤状态"
+}
+```
+- **响应**:
+```json
+{
+  "success": true,
+  "data": {
+    "conflicts": [
+      {
+        "productPair": [
+          {
+            "id": "产品1ID",
+            "name": "产品1名称",
+            "problematicIngredients": ["成分1", "成分2"]
+          },
+          {
+            "id": "产品2ID",
+            "name": "产品2名称",
+            "problematicIngredients": ["成分3", "成分4"]
+          }
+        ],
+        "level": "severe",
+        "description": "这两种产品不应同时使用，可能导致肌肤刺激",
+        "aiRecommendations": "AI生成的建议和解决方案"
+      }
+    ],
+    "compatibleProducts": [
+      ["兼容产品ID组合"]
+    ],
+    "usageSuggestion": "AI生成的使用顺序和方法建议",
+    "createdAt": "创建时间"
+  }
+}
+```
+
+#### 5.2 提交成分检测冲突
+
+- **URL**: `/conflict-detection/ingredients`
+- **方法**: `POST`
+- **描述**: 提交多组成分列表检测可能的冲突
+- **请求体**:
+```json
+{
+  "ingredientLists": [
+    "成分列表1（文本格式，多个成分用逗号分隔）",
+    "成分列表2（文本格式，多个成分用逗号分隔）"
+  ],
+  "skinType": "用户肌肤类型",
+  "skinStatus": "用户肌肤状态"
 }
 ```
 - **响应**:
@@ -507,264 +459,24 @@
       {
         "ingredientPair": [
           {
-            "id": "成分1ID",
-            "name": "成分1名称"
+            "list": 0,
+            "ingredients": ["成分1", "成分2"]
           },
           {
-            "id": "成分2ID",
-            "name": "成分2名称"
+            "list": 1,
+            "ingredients": ["成分3", "成分4"]
           }
         ],
-        "level": "severe",
-        "description": "这两种成分不应同时使用，可能导致肌肤刺激",
-        "recommendations": [
-          "建议在不同的护肤步骤中使用",
-          "至少间隔30分钟使用"
-        ]
+        "level": "moderate",
+        "description": "这些成分组合可能会降低彼此的功效",
+        "aiRecommendations": "AI生成的建议和解决方案"
       }
     ],
     "compatibleGroups": [
-      ["兼容成分组合"]
+      "这些成分可以安全地一起使用：成分5, 成分6, 成分7"
     ],
-    "usageSuggestion": "建议使用顺序和方法"
-  }
-}
-```
-
-#### 6.2 检测产品冲突
-
-- **URL**: `/conflict-detection/products`
-- **方法**: `POST`
-- **描述**: 检测多个产品之间可能存在的成分冲突
-- **请求体**:
-```json
-{
-  "productIds": ["产品ID列表"]
-}
-```
-- **响应**: 与6.1类似，但包含产品信息
-
-### 7. 护肤日记
-
-#### 7.1 创建护肤日记
-
-- **URL**: `/skincare-diary`
-- **方法**: `POST`
-- **描述**: 创建一条护肤日记记录
-- **请求体**:
-```json
-{
-  "date": "日期",
-  "skinCondition": "肌肤状况",
-  "products": [
-    {
-      "productId": "产品ID",
-      "usageTime": "使用时间",
-      "step": "护肤步骤",
-      "notes": "使用备注"
-    }
-  ],
-  "notes": "整体备注",
-  "images": ["图片URL数组"],
-  "mood": "心情",
-  "weather": "天气"
-}
-```
-- **响应**:
-```json
-{
-  "success": true,
-  "data": {
-    "id": "日记ID",
-    "date": "日期",
-    "skinCondition": "肌肤状况",
-    "products": [
-      {
-        "product": {
-          "id": "产品ID",
-          "name": "产品名称",
-          "brand": "品牌名称",
-          "imageUrl": "产品图片URL"
-        },
-        "usageTime": "使用时间",
-        "step": "护肤步骤",
-        "notes": "使用备注"
-      }
-    ],
-    "notes": "整体备注",
-    "images": ["图片URL数组"],
-    "mood": "心情",
-    "weather": "天气",
+    "usageSuggestion": "AI生成的使用顺序和方法建议",
     "createdAt": "创建时间"
-  }
-}
-```
-
-#### 7.2 获取护肤日记列表
-
-- **URL**: `/skincare-diary`
-- **方法**: `GET`
-- **描述**: 获取用户的护肤日记列表
-- **请求参数**:
-  - `month`: 月份（格式：YYYY-MM，可选）
-  - `page`: 页码（默认1）
-  - `limit`: 每页数量（默认10）
-- **响应**:
-```json
-{
-  "success": true,
-  "data": {
-    "total": 总记录数,
-    "pages": 总页数,
-    "current": 当前页码,
-    "records": [
-      {
-        "id": "日记ID",
-        "date": "日期",
-        "skinCondition": "肌肤状况",
-        "productCount": 产品数量,
-        "hasImages": true/false,
-        "mood": "心情",
-        "createdAt": "创建时间"
-      }
-    ]
-  }
-}
-```
-
-### 8. 文章和资讯
-
-#### 8.1 获取文章列表
-
-- **URL**: `/articles`
-- **方法**: `GET`
-- **描述**: 获取护肤知识文章列表
-- **请求参数**:
-  - `category`: 文章类别（可选）
-  - `tag`: 文章标签（可选）
-  - `page`: 页码（默认1）
-  - `limit`: 每页数量（默认10）
-- **响应**:
-```json
-{
-  "success": true,
-  "data": {
-    "total": 总记录数,
-    "pages": 总页数,
-    "current": 当前页码,
-    "records": [
-      {
-        "id": "文章ID",
-        "title": "文章标题",
-        "summary": "文章摘要",
-        "author": "作者",
-        "category": "文章类别",
-        "tags": ["标签1", "标签2"],
-        "coverImageUrl": "封面图片URL",
-        "publishedAt": "发布时间",
-        "readCount": 阅读量
-      }
-    ]
-  }
-}
-```
-
-#### 8.2 获取文章详情
-
-- **URL**: `/articles/{articleId}`
-- **方法**: `GET`
-- **描述**: 获取文章详细内容
-- **请求参数**:
-  - `articleId`: 文章ID
-- **响应**:
-```json
-{
-  "success": true,
-  "data": {
-    "id": "文章ID",
-    "title": "文章标题",
-    "content": "文章内容（HTML格式）",
-    "author": {
-      "id": "作者ID",
-      "name": "作者名称",
-      "avatarUrl": "作者头像URL",
-      "title": "作者头衔"
-    },
-    "category": "文章类别",
-    "tags": ["标签1", "标签2"],
-    "coverImageUrl": "封面图片URL",
-    "images": ["文章图片URL数组"],
-    "publishedAt": "发布时间",
-    "readCount": 阅读量,
-    "relatedArticles": [
-      {
-        "id": "相关文章ID",
-        "title": "相关文章标题",
-        "coverImageUrl": "封面图片URL"
-      }
-    ],
-    "relatedProducts": [
-      {
-        "id": "相关产品ID",
-        "name": "相关产品名称",
-        "imageUrl": "产品图片URL"
-      }
-    ]
-  }
-}
-```
-
-### 9. 天气与护肤建议
-
-#### 9.1 获取当前位置天气和护肤建议
-
-- **URL**: `/weather-advice`
-- **方法**: `GET`
-- **描述**: 根据用户位置获取天气信息和相应的护肤建议
-- **请求参数**:
-  - `latitude`: 纬度（可选，默认使用上次位置）
-  - `longitude`: 经度（可选，默认使用上次位置）
-- **响应**:
-```json
-{
-  "success": true,
-  "data": {
-    "location": {
-      "city": "城市名称",
-      "district": "区域名称"
-    },
-    "weather": {
-      "condition": "晴",
-      "temperature": 26,
-      "humidity": 60,
-      "windSpeed": 3.4,
-      "uvIndex": 7,
-      "pm25": 35,
-      "airQuality": "良好"
-    },
-    "advice": {
-      "summary": "今日紫外线较强，注意防晒",
-      "detail": "详细建议内容",
-      "emphasisPoints": [
-        {
-          "title": "防晒",
-          "description": "建议使用SPF50+防晒霜"
-        },
-        {
-          "title": "补水",
-          "description": "随身携带喷雾补水"
-        }
-      ],
-      "recommendedProducts": [
-        {
-          "id": "产品ID",
-          "name": "产品名称",
-          "brand": "品牌名称",
-          "imageUrl": "产品图片URL",
-          "category": "产品类别"
-        }
-      ]
-    }
   }
 }
 ```
@@ -775,18 +487,26 @@
 
 ```json
 {
-  "id": "用户ID",
+  "_id": "MongoDB ObjectId (作为用户ID)",
   "username": "用户名",
   "email": "邮箱地址",
+  "password": "加密密码（bcrypt）",
   "phoneNumber": "手机号码",
   "avatarUrl": "头像URL",
-  "password": "加密密码（不返回给客户端）",
   "skinType": "肌肤类型",
+  "skinStatus": "肌肤状态",
+  "skinAiSummary": "AI生成的肌肤状态总结",
   "concerns": ["肌肤问题列表"],
   "favorites": ["收藏的产品ID列表"],
-  "createdAt": "创建时间",
-  "updatedAt": "更新时间",
-  "lastLoginAt": "最后登录时间"
+  "products": [
+    {
+      "productId": "产品ID（引用Products集合）",
+      "addedAt": "添加时间"
+    }
+  ],
+  "created_at": "创建时间（ISODate）",
+  "updated_at": "更新时间（ISODate）",
+  "last_login_at": "最后登录时间（ISODate）"
 }
 ```
 
@@ -794,26 +514,22 @@
 
 ```json
 {
-  "id": "分析记录ID",
-  "userId": "用户ID",
+  "_id": "MongoDB ObjectId (作为分析记录ID)",
+  "userId": "用户ID（引用Users集合）",
   "imageUrl": "原始图片URL",
   "thumbnailUrl": "缩略图URL",
-  "quizData": {
-    "skinType": "问卷回答的肌肤类型",
-    "concerns": ["问卷回答的肌肤问题"],
-    "sensitivity": "问卷回答的敏感程度"
-  },
+  "skinStatus": "用户提供的肌肤状态描述",
   "results": {
-    "hydration": { "value": 75, "status": "状态描述", "trend": "+5%", "trendUp": true },
+    "hydration": { "value": 75, "status": "状态描述" },
     "oil": { "value": 60, "status": "状态描述" },
     "sensitivity": { "value": 2, "maxValue": 5, "status": "状态描述" },
     "pores": { "value": 30, "status": "状态描述" },
     "wrinkles": { "value": 15, "status": "状态描述" },
     "pigmentation": { "value": 25, "status": "状态描述" }
   },
+  "skinAiSummary": "AI生成的肌肤状态总结和护理建议",
   "recommendations": [
     {
-      "id": "推荐ID",
       "title": "推荐标题",
       "description": "推荐描述",
       "iconType": "图标类型",
@@ -822,7 +538,9 @@
       "recommendedProducts": ["推荐产品ID列表"]
     }
   ],
-  "createdAt": "创建时间"
+  "aiPrompt": "发送给AI的提示文本（用于记录）",
+  "aiResponse": "原始AI响应（用于记录和改进）",
+  "created_at": "创建时间（ISODate）"
 }
 ```
 
@@ -830,126 +548,69 @@
 
 ```json
 {
-  "id": "产品ID",
+  "_id": "MongoDB ObjectId (作为产品ID)",
+  "userId": "添加该产品的用户ID（引用Users集合）",
   "name": "产品名称",
-  "brand": "品牌名称",
-  "category": "产品类别",
-  "subCategory": "产品子类别",
-  "imageUrl": "产品图片URL",
-  "description": "产品描述",
-  "price": 299.00,
-  "currency": "CNY",
-  "size": "50ml",
-  "ingredients": ["成分ID列表"],
-  "rating": 4.5,
-  "reviewCount": 120,
+  "ingredients": "产品成分（原始文本）",
+  "ingredientsList": ["解析后的成分列表"],
+  "aiSummary": "AI生成的产品功效和潜在危害的总结",
   "analysis": {
     "safetyScore": 85,
     "effectivenessScore": 90,
     "suitabilityScore": 75,
-    "goodFor": ["适合的肌肤类型"],
-    "notRecommendedFor": ["不推荐的肌肤类型"]
+    "highlights": [
+      {
+        "type": "good/warning",
+        "description": "描述文本"
+      }
+    ]
   },
-  "createdAt": "创建时间",
-  "updatedAt": "更新时间"
+  "suitableFor": ["适合的肌肤类型"],
+  "notSuitableFor": ["不推荐的肌肤类型"],
+  "aiPrompt": "发送给AI的提示文本（用于记录）",
+  "aiResponse": "原始AI响应（用于记录和改进）",
+  "created_at": "创建时间（ISODate）",
+  "updated_at": "更新时间（ISODate）"
 }
 ```
 
-### 成分模型 (Ingredient)
+### 冲突检测记录模型 (ConflictDetection)
 
 ```json
 {
-  "id": "成分ID",
-  "name": "成分名称",
-  "alias": ["别名列表"],
-  "engName": "英文名称",
-  "casNumber": "CAS号",
-  "category": "成分类别",
-  "function": "主要功效",
-  "description": "详细描述",
-  "safetyLevel": 1,
-  "safetyDescription": "安全等级描述",
-  "irritationRisk": "刺激风险",
-  "acneRisk": "痘痘风险",
-  "allergicRisk": "过敏风险",
-  "pregnancySafe": true,
-  "researchPapers": ["研究论文引用"],
-  "suitableSkinTypes": ["适合的肌肤类型"],
-  "notSuitableSkinTypes": ["不适合的肌肤类型"],
-  "createdAt": "创建时间",
-  "updatedAt": "更新时间"
-}
-```
-
-### 成分冲突模型 (IngredientConflict)
-
-```json
-{
-  "id": "冲突ID",
-  "ingredientPair": ["成分ID对"],
-  "level": "冲突等级",
-  "description": "冲突描述",
-  "recommendations": ["建议列表"],
-  "source": "数据来源",
-  "createdAt": "创建时间",
-  "updatedAt": "更新时间"
-}
-```
-
-### 护肤日记模型 (SkincareDiary)
-
-```json
-{
-  "id": "日记ID",
-  "userId": "用户ID",
-  "date": "日期",
-  "skinCondition": "肌肤状况",
-  "products": [
+  "_id": "MongoDB ObjectId (作为冲突检测记录ID)",
+  "userId": "用户ID（引用Users集合）",
+  "type": "products/ingredients", 
+  "inputs": {
+    "products": ["产品ID列表"],
+    "ingredientLists": ["成分列表（多组）"],
+    "skinType": "用户肌肤类型",
+    "skinStatus": "用户肌肤状态"
+  },
+  "conflicts": [
     {
-      "productId": "产品ID",
-      "usageTime": "使用时间",
-      "step": "护肤步骤",
-      "notes": "使用备注"
+      "items": ["冲突项目标识，可能是产品ID或成分列表索引"],
+      "problematicItems": ["具体冲突的成分"],
+      "level": "冲突等级（severe/moderate/mild）",
+      "description": "冲突描述",
+      "aiRecommendations": "AI建议"
     }
   ],
-  "notes": "整体备注",
-  "images": ["图片URL数组"],
-  "mood": "心情",
-  "weather": "天气",
-  "createdAt": "创建时间",
-  "updatedAt": "更新时间"
-}
-```
-
-### 文章模型 (Article)
-
-```json
-{
-  "id": "文章ID",
-  "title": "文章标题",
-  "summary": "文章摘要",
-  "content": "文章内容（HTML格式）",
-  "authorId": "作者ID",
-  "category": "文章类别",
-  "tags": ["标签列表"],
-  "coverImageUrl": "封面图片URL",
-  "images": ["文章图片URL数组"],
-  "publishedAt": "发布时间",
-  "readCount": 阅读量,
-  "relatedArticles": ["相关文章ID列表"],
-  "relatedProducts": ["相关产品ID列表"],
-  "createdAt": "创建时间",
-  "updatedAt": "更新时间"
+  "compatibleGroups": ["兼容项目组合"],
+  "usageSuggestion": "使用建议",
+  "aiPrompt": "发送给AI的提示文本（用于记录）",
+  "aiResponse": "原始AI响应（用于记录和改进）",
+  "created_at": "创建时间（ISODate）"
 }
 ```
 
 ## 安全与性能考虑
 
 1. 所有API请求使用HTTPS加密传输
-2. 所有密码使用bcrypt加密存储
+2. 所有密码使用bcrypt加密存储 
 3. 用户认证采用JWT令牌，有效期为24小时
 4. 针对图片上传接口，限制文件大小不超过10MB
 5. 所有API均实现了限流保护，默认每IP每分钟不超过60次请求
-6. 敏感数据（如用户肌肤分析记录）采用额外加密存储
-7. 图片分析结果缓存24小时，减少重复分析
-8. 针对热门产品和成分信息进行CDN缓存，提升响应速度 
+6. AI服务调用使用OpenAI API，失败时有重试机制
+7. 针对热门产品和成分信息进行缓存，减少重复分析
+8. 用户上传的图片和分析结果存储在安全的云存储中 

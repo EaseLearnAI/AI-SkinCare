@@ -10,13 +10,13 @@ class ArticleCard extends StatelessWidget {
   final VoidCallback? onTap;
 
   const ArticleCard({
-    Key? key,
+    super.key,
     required this.title,
     required this.imageUrl,
     required this.time,
     required this.views,
     this.onTap,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -51,26 +51,24 @@ class ArticleCard extends StatelessWidget {
                 child: CachedNetworkImage(
                   imageUrl: imageUrl,
                   fit: BoxFit.cover,
-                  placeholder:
-                      (context, url) => Container(
-                        color: AppTheme.sakuraPink100,
-                        child: const Center(
-                          child: CircularProgressIndicator(
-                            valueColor: AlwaysStoppedAnimation<Color>(
-                              AppTheme.sakuraPink500,
-                            ),
-                            strokeWidth: 2,
-                          ),
+                  placeholder: (context, url) => Container(
+                    color: AppTheme.sakuraPink100,
+                    child: const Center(
+                      child: CircularProgressIndicator(
+                        valueColor: AlwaysStoppedAnimation<Color>(
+                          AppTheme.sakuraPink500,
                         ),
+                        strokeWidth: 2,
                       ),
-                  errorWidget:
-                      (context, url, error) => Container(
-                        color: AppTheme.sakuraPink100,
-                        child: const Icon(
-                          Icons.error_outline,
-                          color: AppTheme.sakuraPink500,
-                        ),
-                      ),
+                    ),
+                  ),
+                  errorWidget: (context, url, error) => Container(
+                    color: AppTheme.sakuraPink100,
+                    child: const Icon(
+                      Icons.error_outline,
+                      color: AppTheme.sakuraPink500,
+                    ),
+                  ),
                 ),
               ),
             ),

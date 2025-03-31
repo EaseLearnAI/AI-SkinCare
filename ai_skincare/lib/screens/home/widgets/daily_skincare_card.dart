@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../themes/app_theme.dart';
 
 class DailySkinCareCard extends StatelessWidget {
-  const DailySkinCareCard({Key? key}) : super(key: key);
+  const DailySkinCareCard({super.key});
 
   @override
   Widget build(BuildContext context) {

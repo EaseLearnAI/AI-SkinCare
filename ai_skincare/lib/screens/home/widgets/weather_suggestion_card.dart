@@ -3,7 +3,7 @@ import '../../../themes/app_theme.dart';
 import '../../../widgets/gradient_card.dart';
 
 class WeatherSuggestionCard extends StatelessWidget {
-  const WeatherSuggestionCard({Key? key}) : super(key: key);
+  const WeatherSuggestionCard({super.key});
 
   @override
   Widget build(BuildContext context) {

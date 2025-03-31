@@ -6,7 +6,7 @@ import '../config/routes.dart';
 class BottomNavBar extends StatelessWidget {
   final int currentIndex;
 
-  const BottomNavBar({Key? key, required this.currentIndex}) : super(key: key);
+  const BottomNavBar({super.key, required this.currentIndex});
 
   @override
   Widget build(BuildContext context) {
@@ -53,11 +53,6 @@ class BottomNavBar extends StatelessWidget {
             label: '肌肤检测',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.spa_outlined),
-            activeIcon: Icon(Icons.spa),
-            label: '原料百科',
-          ),
-          BottomNavigationBarItem(
             icon: Icon(Icons.person_outline),
             activeIcon: Icon(Icons.person),
             label: '个人中心',
@@ -77,9 +72,6 @@ class BottomNavBar extends StatelessWidget {
               Get.offAllNamed(AppRoutes.skinDetection);
               break;
             case 3:
-              Get.offAllNamed(AppRoutes.ingredientAnalysis);
-              break;
-            case 4:
               Get.offAllNamed(AppRoutes.userCenter);
               break;
           }
@@ -96,33 +88,32 @@ class BottomNavBar extends StatelessWidget {
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
-      builder:
-          (context) => Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                width: 40,
-                height: 4,
-                margin: const EdgeInsets.symmetric(vertical: 12),
-                decoration: BoxDecoration(
-                  color: Colors.grey.shade300,
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-              ListTile(
-                leading: const Icon(
-                  Icons.warning_amber_outlined,
-                  color: AppTheme.sakuraPink500,
-                ),
-                title: const Text('成分冲突检测'),
-                onTap: () {
-                  Navigator.pop(context);
-                  Get.toNamed(AppRoutes.conflict);
-                },
-              ),
-              const SizedBox(height: 16),
-            ],
+      builder: (context) => Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: 40,
+            height: 4,
+            margin: const EdgeInsets.symmetric(vertical: 12),
+            decoration: BoxDecoration(
+              color: Colors.grey.shade300,
+              borderRadius: BorderRadius.circular(2),
+            ),
           ),
+          ListTile(
+            leading: const Icon(
+              Icons.warning_amber_outlined,
+              color: AppTheme.sakuraPink500,
+            ),
+            title: const Text('成分冲突检测'),
+            onTap: () {
+              Navigator.pop(context);
+              Get.toNamed(AppRoutes.conflict);
+            },
+          ),
+          const SizedBox(height: 16),
+        ],
+      ),
     );
   }
 }

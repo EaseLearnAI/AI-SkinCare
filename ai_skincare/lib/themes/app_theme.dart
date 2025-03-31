@@ -53,11 +53,9 @@ class AppTheme {
     colorScheme: ColorScheme.light(
       primary: sakuraPink500,
       secondary: sakuraPink300,
-      background: background,
       surface: cardBackground,
       onPrimary: Colors.white,
       onSecondary: Colors.white,
-      onBackground: textPrimary,
       onSurface: textPrimary,
       error: error,
       onError: Colors.white,
@@ -194,11 +192,9 @@ class AppTheme {
     colorScheme: ColorScheme.dark(
       primary: sakuraPink500,
       secondary: sakuraPink300,
-      background: const Color(0xFF121212),
       surface: const Color(0xFF1E1E1E),
       onPrimary: Colors.white,
       onSecondary: Colors.white,
-      onBackground: Colors.white,
       onSurface: Colors.white,
       error: error,
       onError: Colors.white,

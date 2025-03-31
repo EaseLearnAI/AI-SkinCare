@@ -1,76 +1,43 @@
 class IngredientModel {
   final String id;
   final String name;
-  final List<String>? alias;
-  final String? engName;
-  final String? casNumber;
-  final String? category;
   final String? function;
+  final int safetyLevel; // 0-100，表示安全级别
+  final String? category;
   final String? description;
-  final int safetyLevel;
-  final String? safetyDescription;
-  final String irritationRisk;
-  final String acneRisk;
-  final String? allergicRisk;
-  final bool? pregnancySafe;
-  final List<String>? researchPapers;
   final List<String>? suitableSkinTypes;
-  final List<String>? notSuitableSkinTypes;
-  final String? createdAt;
-  final String? updatedAt;
+  final List<String>? warningsAndRestrictions;
+  final Map<String, dynamic>? scientificData;
 
   IngredientModel({
     required this.id,
     required this.name,
-    this.alias,
-    this.engName,
-    this.casNumber,
-    this.category,
     this.function,
-    this.description,
     required this.safetyLevel,
-    this.safetyDescription,
-    required this.irritationRisk,
-    required this.acneRisk,
-    this.allergicRisk,
-    this.pregnancySafe,
-    this.researchPapers,
+    this.category,
+    this.description,
     this.suitableSkinTypes,
-    this.notSuitableSkinTypes,
-    this.createdAt,
-    this.updatedAt,
+    this.warningsAndRestrictions,
+    this.scientificData,
   });
 
   factory IngredientModel.fromJson(Map<String, dynamic> json) {
     return IngredientModel(
-      id: json['id'],
-      name: json['name'],
-      alias: json['alias'] != null ? List<String>.from(json['alias']) : null,
-      engName: json['engName'],
-      casNumber: json['casNumber'],
-      category: json['category'],
+      id: json['id'] ?? '',
+      name: json['name'] ?? '',
       function: json['function'],
+      safetyLevel: json['safety_level'] ?? 50,
+      category: json['category'],
       description: json['description'],
-      safetyLevel: json['safetyLevel'],
-      safetyDescription: json['safetyDescription'],
-      irritationRisk: json['irritationRisk'],
-      acneRisk: json['acneRisk'],
-      allergicRisk: json['allergicRisk'],
-      pregnancySafe: json['pregnancySafe'],
-      researchPapers:
-          json['researchPapers'] != null
-              ? List<String>.from(json['researchPapers'])
-              : null,
       suitableSkinTypes:
-          json['suitableSkinTypes'] != null
-              ? List<String>.from(json['suitableSkinTypes'])
+          json['suitable_skin_types'] != null
+              ? List<String>.from(json['suitable_skin_types'])
               : null,
-      notSuitableSkinTypes:
-          json['notSuitableSkinTypes'] != null
-              ? List<String>.from(json['notSuitableSkinTypes'])
+      warningsAndRestrictions:
+          json['warnings_and_restrictions'] != null
+              ? List<String>.from(json['warnings_and_restrictions'])
               : null,
-      createdAt: json['createdAt'],
-      updatedAt: json['updatedAt'],
+      scientificData: json['scientific_data'],
     );
   }
 
@@ -78,23 +45,13 @@ class IngredientModel {
     return {
       'id': id,
       'name': name,
-      'alias': alias,
-      'engName': engName,
-      'casNumber': casNumber,
-      'category': category,
       'function': function,
+      'safety_level': safetyLevel,
+      'category': category,
       'description': description,
-      'safetyLevel': safetyLevel,
-      'safetyDescription': safetyDescription,
-      'irritationRisk': irritationRisk,
-      'acneRisk': acneRisk,
-      'allergicRisk': allergicRisk,
-      'pregnancySafe': pregnancySafe,
-      'researchPapers': researchPapers,
-      'suitableSkinTypes': suitableSkinTypes,
-      'notSuitableSkinTypes': notSuitableSkinTypes,
-      'createdAt': createdAt,
-      'updatedAt': updatedAt,
+      'suitable_skin_types': suitableSkinTypes,
+      'warnings_and_restrictions': warningsAndRestrictions,
+      'scientific_data': scientificData,
     };
   }
 }

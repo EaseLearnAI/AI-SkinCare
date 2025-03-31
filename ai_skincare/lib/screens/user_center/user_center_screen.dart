@@ -4,7 +4,7 @@ import '../../themes/app_theme.dart';
 import '../../widgets/bottom_nav_bar.dart';
 
 class UserCenterScreen extends StatefulWidget {
-  const UserCenterScreen({Key? key}) : super(key: key);
+  const UserCenterScreen({super.key});
 
   @override
   _UserCenterScreenState createState() => _UserCenterScreenState();
@@ -264,28 +264,27 @@ class _UserCenterScreenState extends State<UserCenterScreen> {
                 child: Wrap(
                   spacing: 8,
                   runSpacing: 8,
-                  children:
-                      (_userData['skinProblems'] as List<dynamic>).map((
-                        problem,
-                      ) {
-                        return Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 8,
-                            vertical: 2,
-                          ),
-                          decoration: BoxDecoration(
-                            color: Colors.orange.shade50,
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: Text(
-                            problem as String,
-                            style: TextStyle(
-                              fontSize: 13,
-                              color: Colors.orange.shade800,
-                            ),
-                          ),
-                        );
-                      }).toList(),
+                  children: (_userData['skinProblems'] as List<dynamic>).map((
+                    problem,
+                  ) {
+                    return Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 2,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.orange.shade50,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Text(
+                        problem as String,
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: Colors.orange.shade800,
+                        ),
+                      ),
+                    );
+                  }).toList(),
                 ),
               ),
             ],
@@ -410,8 +409,7 @@ class _UserCenterScreenState extends State<UserCenterScreen> {
     return Column(
       children: [
         GestureDetector(
-          onTap:
-              onTap ??
+          onTap: onTap ??
               () {
                 // 处理点击事件
                 Get.snackbar(
@@ -521,18 +519,16 @@ class _UserCenterScreenState extends State<UserCenterScreen> {
                   Container(
                     padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
-                      color:
-                          history['type'] == 'skinTest'
-                              ? AppTheme.sakuraPink100
-                              : Colors.blue.shade50,
+                      color: history['type'] == 'skinTest'
+                          ? AppTheme.sakuraPink100
+                          : Colors.blue.shade50,
                       shape: BoxShape.circle,
                     ),
                     child: Icon(
                       history['icon'] as IconData,
-                      color:
-                          history['type'] == 'skinTest'
-                              ? AppTheme.sakuraPink500
-                              : Colors.blue.shade500,
+                      color: history['type'] == 'skinTest'
+                          ? AppTheme.sakuraPink500
+                          : Colors.blue.shade500,
                       size: 16,
                     ),
                   ),

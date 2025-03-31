@@ -8,7 +8,7 @@ import 'widgets/weather_suggestion_card.dart';
 import 'widgets/article_card.dart';
 
 class HomeScreen extends StatefulWidget {
-  const HomeScreen({Key? key}) : super(key: key);
+  const HomeScreen({super.key});
 
   @override
   _HomeScreenState createState() => _HomeScreenState();
